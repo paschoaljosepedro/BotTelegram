@@ -1,0 +1,133 @@
+import telebot
+import pyodbc
+from caminho import chave_api 
+
+dados_conexao = (
+    "Driver={SQL Server};"
+    "Server=DESKTOP-HJLJC64\SQLEXPRESS;"
+    "Database=Python_SQL;"
+)
+conexao = pyodbc.connect(dados_conexao)
+print("Conexão bem-sucedida!")
+cursor = conexao.cursor()
+
+bot = telebot.TeleBot(chave_api)
+
+@bot.message_handler(commands=["opcao1"])
+def opcao1(mensagem):
+    texto = """
+        Onde deseja ler?
+        /asura
+        /mangaBuddy"""
+    bot.reply_to(mensagem, texto)
+
+def store_dados(table, id, nome, capitulo):
+    comando = f"INSERT INTO {table} (id, nome, capitulo) VALUES (?, ?, ?)"
+    cursor.execute(comando, (id, nome, capitulo))
+    conexao.commit()
+    
+@bot.message_handler(commands=["asura"])
+def asura(mensagem):
+    bot.reply_to(mensagem, "Diga o nome e capítulo do manga desejado, separados por ponto final.")
+    bot.register_next_step_handler(mensagem, processar_dados_asura)
+
+def processar_dados_asura(mensagem):
+    try:
+        id = mensagem.from_user.id
+        nome, capitulo = mensagem.text.split(".")
+        store_dados('asura', id, nome.strip(), capitulo.strip())
+        bot.reply_to(mensagem, "Dados armazenados com sucesso!")
+    except Exception as e:
+        bot.reply_to(mensagem, "Houve um erro ao processar seus dados. Tente novamente.")
+
+@bot.message_handler(commands=["mangaBuddy"])
+def mangaBuddy(mensagem):
+    bot.reply_to(mensagem, "Diga o nome e capítulo do manga desejado, separados por ponto final.")
+    bot.register_next_step_handler(mensagem, processar_dados_mangaBuddy)
+
+def processar_dados_mangaBuddy(mensagem):
+    try:
+        id = mensagem.from_user.id
+        nome, capitulo = mensagem.text.split(".")
+        store_dados('mangaBuddy', id, nome.strip(), capitulo.strip())
+        bot.reply_to(mensagem, "Dados armazenados com sucesso!")
+    except Exception as e:
+        bot.reply_to(mensagem, "Houve um erro ao processar seus dados. Tente novamente.")
+
+@bot.message_handler(commands=["opcao2"])
+def opcao2(mensagem):
+    texto = """
+     Deseja excluir de onde?
+      /asuraa
+      /mangaBuddyy"""
+    bot.reply_to(mensagem,texto)
+
+def excluir(table, nome):
+    comando = f"delete from {table} where nome = ? "
+    cursor.execute(comando,(nome,))
+    conexao.commit()
+
+@bot.message_handler(commands=["asuraa"])
+def mostrarNomeAsura(mensagem):
+    comando = f"select nome from  asura"
+    cursor.execute(comando)
+    resultado = cursor.fetchall()    
+    if resultado:
+        nome = [linha[0] for linha in resultado]
+        resposta = '\n'.join(nome)
+    else:
+        resposta = "Nenhum resultado encontrado"
+    bot.reply_to(mensagem,resposta)
+    bot.register_next_step_handler(mensagem,excluirAsura)
+
+def excluirAsura(mensagem):
+    try:
+        nome = mensagem.text
+        print(f"Tentando excluir o nome: {nome}")
+        excluir('asura',nome)
+        bot.reply_to(mensagem,"Dado excluido com sucesso")
+    except Exception as e:
+        print(f"Houve um erro: {str(e)}")
+        bot.reply_to(mensagem,"Houve um erro ao tentar excluir.")
+
+@bot.message_handler(commands=["mangaBuddyy"])
+def mostrarNomeMangaBuddy(mensagem):
+    comando = f"select nome from  mangaBuddy"
+    cursor.execute(comando)
+    resultado = cursor.fetchall()    
+    if resultado:
+        nome = [linha[0] for linha in resultado]
+        resposta = '\n'.join(nome)
+    else:
+        resposta = "Nenhum resultado encontrado"
+    bot.reply_to(mensagem,resposta)
+    bot.register_next_step_handler(mensagem,excluirMangaBuddy)
+
+def excluirMangaBuddy(mensagem):
+    try:
+        nome = mensagem.text
+        print(f"Tentando excluir o nome: {nome}")
+        excluir('mangaBuddy',nome)
+        bot.reply_to(mensagem,"Dado excluido com sucesso")
+    except Exception as e:
+        print(f"Houve um erro: {str(e)}")
+        bot.reply_to(mensagem,"Houve um erro ao tentar excluir.")
+
+@bot.message_handler(commands=["opcao3"])
+def opcao3(mensagem):
+    pass
+
+def verificar(mensagem):
+    return True
+
+@bot.message_handler(func=verificar)
+def responder(mensagem):
+    texto = """
+Escolha uma opção para continuar (Clique no item):
+/opcao1 para adicionar mais 
+/opcao2 para excluir
+/opcao3 pra ver lista
+"""
+    bot.reply_to(mensagem, texto)
+
+bot.polling()
