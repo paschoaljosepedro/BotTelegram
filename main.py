@@ -124,6 +124,7 @@ class Commands:
         except Exception as e:
             self.bot.reply_to(mensagem, f"Houve um erro ao buscar os dados.")
 
+       
     def mensagemAtualizacaoAsura(self,mensagem,nome,capitulo):
         texto = f"Novo capitulo lancado em Asura!{nome} - cap={capitulo} "
         self.bot.reply_to(mensagem,texto)

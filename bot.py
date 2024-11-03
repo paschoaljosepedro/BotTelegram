@@ -5,6 +5,7 @@ chaveApi = caminhoChave
 class TelegramBot:
     def __init__(self, chaveApi):
         self.bot = telebot.TeleBot(chaveApi)
+        
 
     def reply_to(self, mensagem, texto):
         self.bot.reply_to(mensagem, texto)

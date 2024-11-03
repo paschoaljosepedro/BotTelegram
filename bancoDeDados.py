@@ -8,6 +8,7 @@ class Database:
         )
         self.conexao = pyodbc.connect(self.dadosConexao)
         print("Conexão bem-sucedida!")
+       
         self.cursor = self.conexao.cursor()
 
     def insert(self, table, id, nome, capitulo):
@@ -20,6 +21,11 @@ class Database:
         self.cursor.execute(comando, (nome,))
         self.conexao.commit()
 
+    def update(self,table,nome,capitulo):
+        comando = f"UPDATE {table} SET capitulo = ? where nome = ?"
+        self.cursor.execute(comando,(nome,capitulo))
+        self.conexao.commit()
+
     def mostrarNomes(self, table):
         comando = f"SELECT nome FROM {table}"
         self.cursor.execute(comando)
@@ -30,28 +36,14 @@ class Database:
         self.cursor.execute(comando)
         return self.cursor.fetchall()
     
-    def update(self, table, nome, capitulo):
+    def verificaSeExiste(self, table, nome, capitulo):
     # Consulta o banco de dados para ver se o título já existe
         comando = f"SELECT nome, capitulo FROM {table} WHERE nome = ?"
-        self.cursor.execute(comando, (nome,))
+        self.cursor.execute(comando, (nome,capitulo))
         record = self.cursor.fetchone()
+        return record[0]  if record else None
 
-    # Se o título já existir no banco, verificamos o capítulo
-        if record:
-            if record[1] != capitulo:  # Se o capítulo no banco for diferente do novo
-            # Atualiza o capítulo no banco de dados
-                com = f"UPDATE {table} SET capitulo = ? WHERE nome = ?"
-                self.cursor.execute(com, (capitulo, nome))
-                self.conn.commit()  # Confirma a atualização no banco
-                return True  # Houve atualização
-            else:
-                return False  # Nenhuma atualização foi necessária
-        else:
-        # Se o título não existir, insere um novo registro
-            com = f"INSERT INTO {table} (nome, capitulo) VALUES (?, ?)"
-            self.cursor.execute(com, (nome, capitulo))
-            self.conn.commit()  # Salva as mudanças
-            return True  # Considerado uma atualização porque é um novo registro
+    
 
 
             
